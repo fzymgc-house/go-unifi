@@ -87,6 +87,7 @@ type Network struct {
 	DhKey                                         *string                         `json:"x_dh_key,omitempty"`
 	DomainName                                    *string                         `json:"domain_name,omitempty"` // (?=^.{3,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)|^$|[a-zA-Z0-9-]{1,63}
 	Enabled                                       bool                            `json:"enabled"`
+	ExternalID                                    string                          `json:"external_id,omitempty"` // non-generated field: controller-assigned UUID, kept on update
 	ExposedToSiteVPN                              bool                            `json:"exposed_to_site_vpn"`
 	FirewallZoneID                                *string                         `json:"firewall_zone_id,omitempty"`
 	GatewayDevice                                 string                          `json:"gateway_device"`         // (^$|^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$)
@@ -130,6 +131,7 @@ type Network struct {
 	IPSecTunnelIP                                 *string                         `json:"ipsec_tunnel_ip,omitempty"` // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\/([1-9]|[1-2][0-9]|3[0-2])$
 	IPSecTunnelIPEnabled                          bool                            `json:"ipsec_tunnel_ip_enabled"`
 	IPSubnet                                      *string                         `json:"ip_subnet,omitempty"`                      // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\/([1-9]|[1-2][0-9]|3[0-2])$
+	IPV6Enabled                                   *bool                           `json:"ipv6_enabled,omitempty"`                   // non-generated field: Network 10.x stores the IPv6 toggle here
 	IPV6ClientAddressAssignment                   *string                         `json:"ipv6_client_address_assignment,omitempty"` // slaac|dhcpv6
 	IPV6InterfaceType                             *string                         `json:"ipv6_interface_type,omitempty"`            // static|pd|single_network|none
 	IPV6PDAutoPrefixidEnabled                     bool                            `json:"ipv6_pd_auto_prefixid_enabled"`
