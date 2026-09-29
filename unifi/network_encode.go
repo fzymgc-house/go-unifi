@@ -72,6 +72,8 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		GatewayType             *string                         `json:"gateway_type,omitempty"`
 		InternetAccessEnabled   bool                            `json:"internet_access_enabled"`
 		NetworkIsolationEnabled bool                            `json:"network_isolation_enabled"`
+		ExternalID              string                          `json:"external_id,omitempty"`
+		IPV6Enabled             *bool                           `json:"ipv6_enabled,omitempty"`
 		SettingPreference       *string                         `json:"setting_preference,omitempty"`
 		IGMPSnooping            bool                            `json:"igmp_snooping"`
 		DHCPguardEnabled        bool                            `json:"dhcpguard_enabled"`
@@ -161,6 +163,8 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		GatewayType:             valueOrDefault(n.GatewayType, "default"),
 		InternetAccessEnabled:   n.InternetAccessEnabled,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
+		ExternalID:              n.ExternalID,
+		IPV6Enabled:             n.IPV6Enabled,
 		SettingPreference:       valueOrDefault(n.SettingPreference, "auto"),
 		IGMPSnooping:            n.IGMPSnooping,
 		DHCPguardEnabled:        n.DHCPguardEnabled,
@@ -258,6 +262,8 @@ func (n *Network) marshalVLANOnly() ([]byte, error) {
 		VLANEnabled             bool    `json:"vlan_enabled"`
 		IGMPSnooping            bool    `json:"igmp_snooping"`
 		NetworkIsolationEnabled bool    `json:"network_isolation_enabled"`
+		ExternalID              string  `json:"external_id,omitempty"`
+		IPV6Enabled             *bool   `json:"ipv6_enabled,omitempty"`
 		DHCPguardEnabled        bool    `json:"dhcpguard_enabled"`
 		DHCPDIP1                string  `json:"dhcpd_ip_1"`
 		DHCPDIP2                string  `json:"dhcpd_ip_2"`
@@ -278,6 +284,8 @@ func (n *Network) marshalVLANOnly() ([]byte, error) {
 		VLANEnabled:             vlanEnabled,
 		IGMPSnooping:            n.IGMPSnooping,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
+		ExternalID:              n.ExternalID,
+		IPV6Enabled:             n.IPV6Enabled,
 		DHCPguardEnabled:        n.DHCPguardEnabled,
 		DHCPDIP1:                n.DHCPDIP1,
 		DHCPDIP2:                n.DHCPDIP2,
@@ -316,6 +324,8 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		GatewayType             *string                         `json:"gateway_type,omitempty"`
 		InternetAccessEnabled   bool                            `json:"internet_access_enabled"`
 		NetworkIsolationEnabled bool                            `json:"network_isolation_enabled"`
+		ExternalID              string                          `json:"external_id,omitempty"`
+		IPV6Enabled             *bool                           `json:"ipv6_enabled,omitempty"`
 		SettingPreference       *string                         `json:"setting_preference,omitempty"`
 		IGMPSnooping            bool                            `json:"igmp_snooping"`
 		DHCPguardEnabled        bool                            `json:"dhcpguard_enabled"`
@@ -405,6 +415,8 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		GatewayType:             valueOrDefault(n.GatewayType, "default"),
 		InternetAccessEnabled:   n.InternetAccessEnabled,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
+		ExternalID:              n.ExternalID,
+		IPV6Enabled:             n.IPV6Enabled,
 		SettingPreference:       valueOrDefault(n.SettingPreference, "auto"),
 		IGMPSnooping:            n.IGMPSnooping,
 		DHCPguardEnabled:        n.DHCPguardEnabled,

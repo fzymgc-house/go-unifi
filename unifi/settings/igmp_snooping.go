@@ -27,4 +27,5 @@ type IgmpSnooping struct {
 	Switches                           []string `json:"switches,omitempty"`
 	PrimaryQuerier                     string   `json:"primary_querier,omitempty"`
 	FailoverQuerier                    string   `json:"failover_querier,omitempty"`
+	AutoUnknownTrafficHandling         *bool    `json:"auto_unknown_traffic_handling,omitempty"` // non-generated field
 }

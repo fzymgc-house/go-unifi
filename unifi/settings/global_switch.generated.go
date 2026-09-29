@@ -34,13 +34,19 @@ type GlobalSwitch struct {
 	ForwardUnknownMcastRouterPorts bool                                `json:"forward_unknown_mcast_router_ports"`
 	JumboframeEnabled              bool                                `json:"jumboframe_enabled"`
 	RADIUSProfileID                string                              `json:"radiusprofile_id,omitempty"`
-	StpVersion                     string                              `json:"stp_version,omitempty"`       // stp|rstp|disabled
-	SwitchExclusions               []string                            `json:"switch_exclusions,omitempty"` // ^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$
+	StpVersion                     string                              `json:"stp_version,omitempty"`                     // stp|rstp|disabled
+	SwitchExclusions               []string                            `json:"switch_exclusions,omitempty"`               // ^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$
+	AutoStpEdgeDetectionEnabled    *bool                               `json:"auto_stp_edge_detection_enabled,omitempty"` // non-generated field
+	LinkDebounce                   *int64                              `json:"link_debounce,omitempty"`                   // non-generated field
+	PoeStagingDelayMsec            *int64                              `json:"poe_staging_delay_msec,omitempty"`          // non-generated field
 }
 
 func (dst *GlobalSwitch) UnmarshalJSON(b []byte) error {
 	type Alias GlobalSwitch
 	aux := &struct {
+		LinkDebounce        *types.Number `json:"link_debounce"`
+		PoeStagingDelayMsec *types.Number `json:"poe_staging_delay_msec"`
+
 		*Alias
 	}{
 		Alias: (*Alias)(dst),
@@ -54,6 +60,22 @@ func (dst *GlobalSwitch) UnmarshalJSON(b []byte) error {
 	err := json.Unmarshal(b, &aux)
 	if err != nil {
 		return fmt.Errorf("unable to unmarshal alias: %w", err)
+	}
+	if aux.LinkDebounce != nil {
+		if val, err := aux.LinkDebounce.Int64(); err == nil {
+			dst.LinkDebounce = &val
+		} else if string(*aux.LinkDebounce) == "" {
+			var zero int64
+			dst.LinkDebounce = &zero
+		}
+	}
+	if aux.PoeStagingDelayMsec != nil {
+		if val, err := aux.PoeStagingDelayMsec.Int64(); err == nil {
+			dst.PoeStagingDelayMsec = &val
+		} else if string(*aux.PoeStagingDelayMsec) == "" {
+			var zero int64
+			dst.PoeStagingDelayMsec = &zero
+		}
 	}
 
 	return nil
