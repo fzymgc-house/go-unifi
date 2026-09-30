@@ -38,6 +38,7 @@
   "match_ip_sec": "true|false",
   "match_opposite_protocol": "true|false",
   "name": "",
+  "origin_id": "",
   "predefined": "true|false",
   "protocol": "all|tcp|udp|tcp_udp",
   "schedule": {
