@@ -73,6 +73,8 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		InternetAccessEnabled   bool                            `json:"internet_access_enabled"`
 		NetworkIsolationEnabled bool                            `json:"network_isolation_enabled"`
 		ExternalID              string                          `json:"external_id,omitempty"`
+		FirewallZoneID          *string                         `json:"firewall_zone_id,omitempty"`
+		IPV6Aliases             []string                        `json:"ipv6_aliases"`
 		IPV6Enabled             *bool                           `json:"ipv6_enabled,omitempty"`
 		SettingPreference       *string                         `json:"setting_preference,omitempty"`
 		IGMPSnooping            bool                            `json:"igmp_snooping"`
@@ -164,6 +166,8 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		InternetAccessEnabled:   n.InternetAccessEnabled,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
 		ExternalID:              n.ExternalID,
+		FirewallZoneID:          n.FirewallZoneID,
+		IPV6Aliases:             orEmptySlice(n.IPV6Aliases),
 		IPV6Enabled:             n.IPV6Enabled,
 		SettingPreference:       valueOrDefault(n.SettingPreference, "auto"),
 		IGMPSnooping:            n.IGMPSnooping,
@@ -263,6 +267,7 @@ func (n *Network) marshalVLANOnly() ([]byte, error) {
 		IGMPSnooping            bool    `json:"igmp_snooping"`
 		NetworkIsolationEnabled bool    `json:"network_isolation_enabled"`
 		ExternalID              string  `json:"external_id,omitempty"`
+		FirewallZoneID          *string `json:"firewall_zone_id,omitempty"`
 		IPV6Enabled             *bool   `json:"ipv6_enabled,omitempty"`
 		DHCPguardEnabled        bool    `json:"dhcpguard_enabled"`
 		DHCPDIP1                string  `json:"dhcpd_ip_1"`
@@ -285,6 +290,7 @@ func (n *Network) marshalVLANOnly() ([]byte, error) {
 		IGMPSnooping:            n.IGMPSnooping,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
 		ExternalID:              n.ExternalID,
+		FirewallZoneID:          n.FirewallZoneID,
 		IPV6Enabled:             n.IPV6Enabled,
 		DHCPguardEnabled:        n.DHCPguardEnabled,
 		DHCPDIP1:                n.DHCPDIP1,
@@ -325,6 +331,8 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		InternetAccessEnabled   bool                            `json:"internet_access_enabled"`
 		NetworkIsolationEnabled bool                            `json:"network_isolation_enabled"`
 		ExternalID              string                          `json:"external_id,omitempty"`
+		FirewallZoneID          *string                         `json:"firewall_zone_id,omitempty"`
+		IPV6Aliases             []string                        `json:"ipv6_aliases"`
 		IPV6Enabled             *bool                           `json:"ipv6_enabled,omitempty"`
 		SettingPreference       *string                         `json:"setting_preference,omitempty"`
 		IGMPSnooping            bool                            `json:"igmp_snooping"`
@@ -416,6 +424,8 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		InternetAccessEnabled:   n.InternetAccessEnabled,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
 		ExternalID:              n.ExternalID,
+		FirewallZoneID:          n.FirewallZoneID,
+		IPV6Aliases:             orEmptySlice(n.IPV6Aliases),
 		IPV6Enabled:             n.IPV6Enabled,
 		SettingPreference:       valueOrDefault(n.SettingPreference, "auto"),
 		IGMPSnooping:            n.IGMPSnooping,
@@ -556,6 +566,8 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		// Event / alias fields
 		ReportWANEvent bool                    `json:"report_wan_event"`
 		WANIPAliases   []string                `json:"wan_ip_aliases"`
+		RoutingTableID *int64                  `json:"routing_table_id,omitempty"`
+		FirewallZoneID *string                 `json:"firewall_zone_id,omitempty"`
 		WANDHCPOptions []NetworkWANDHCPOptions `json:"wan_dhcp_options"`
 
 		// Provider capabilities
@@ -625,6 +637,8 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		// Event / alias fields
 		ReportWANEvent: n.ReportWANEvent,
 		WANIPAliases:   orEmptySlice(n.WANIPAliases),
+		RoutingTableID: n.RoutingTableID,
+		FirewallZoneID: n.FirewallZoneID,
 		WANDHCPOptions: orEmptyWANDHCPOptions(n.WANDHCPOptions),
 
 		// Provider capabilities

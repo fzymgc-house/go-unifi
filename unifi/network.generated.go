@@ -132,6 +132,7 @@ type Network struct {
 	IPSecTunnelIPEnabled                          bool                            `json:"ipsec_tunnel_ip_enabled"`
 	IPSubnet                                      *string                         `json:"ip_subnet,omitempty"`                      // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\/([1-9]|[1-2][0-9]|3[0-2])$
 	IPV6Enabled                                   *bool                           `json:"ipv6_enabled,omitempty"`                   // non-generated field: Network 10.x stores the IPv6 toggle here
+	IPV6Aliases                                   []string                        `json:"ipv6_aliases,omitempty"`                   // non-generated field: extra IPv6 addresses on the network, such as a ULA gateway beside a delegated prefix
 	IPV6ClientAddressAssignment                   *string                         `json:"ipv6_client_address_assignment,omitempty"` // slaac|dhcpv6
 	IPV6InterfaceType                             *string                         `json:"ipv6_interface_type,omitempty"`            // static|pd|single_network|none
 	IPV6PDAutoPrefixidEnabled                     bool                            `json:"ipv6_pd_auto_prefixid_enabled"`
@@ -195,6 +196,7 @@ type Network struct {
 	SdwanRemoteSiteID                             *string                         `json:"sdwan_remote_site_id,omitempty"`
 	ServerCrt                                     *string                         `json:"x_server_crt,omitempty"`
 	ServerKey                                     *string                         `json:"x_server_key,omitempty"`
+	RoutingTableID                                *int64                          `json:"routing_table_id,omitempty"`   // non-generated field: routing table of a WAN network
 	SettingPreference                             *string                         `json:"setting_preference,omitempty"` // auto|manual
 	SharedClientCrt                               *string                         `json:"x_shared_client_crt,omitempty"`
 	SharedClientKey                               *string                         `json:"x_shared_client_key,omitempty"`

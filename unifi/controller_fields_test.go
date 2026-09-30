@@ -109,3 +109,112 @@ func TestAPGroupRoundTripsForWLANConf(t *testing.T) {
 		t.Errorf("marshal dropped for_wlanconf: %s", out)
 	}
 }
+
+// A network's zone is firewall_zone_id. The controller replaces the whole object on update, so an
+// encoder that drops the key moves the network back to its default zone.
+func TestNetworkMarshalKeepsFirewallZone(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest, unifi.PurposeVLANOnly, unifi.PurposeWAN} {
+		t.Run(purpose, func(t *testing.T) {
+			raw := `{"purpose":"` + purpose + `","name":"n","firewall_zone_id":"6abd09ef1f816fd2e03301ab"}`
+			var n unifi.Network
+			if err := json.Unmarshal([]byte(raw), &n); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			out, err := json.Marshal(&n)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), `"firewall_zone_id":"6abd09ef1f816fd2e03301ab"`) {
+				t.Errorf("marshal dropped firewall_zone_id: %s", out)
+			}
+		})
+	}
+}
+
+// ipv6_aliases holds extra IPv6 addresses on a LAN network, such as a ULA gateway beside a
+// delegated prefix. The LAN encoders always send it, as they send ip_aliases.
+func TestNetworkMarshalKeepsIPv6Aliases(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest} {
+		t.Run(purpose, func(t *testing.T) {
+			raw := `{"purpose":"` + purpose + `","name":"n","ipv6_interface_type":"pd","ipv6_aliases":["fd00:601::1/64"]}`
+			var n unifi.Network
+			if err := json.Unmarshal([]byte(raw), &n); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if len(n.IPV6Aliases) != 1 || n.IPV6Aliases[0] != "fd00:601::1/64" {
+				t.Errorf("IPV6Aliases = %v", n.IPV6Aliases)
+			}
+			out, err := json.Marshal(&n)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), `"ipv6_aliases":["fd00:601::1/64"]`) {
+				t.Errorf("marshal dropped ipv6_aliases: %s", out)
+			}
+
+			var empty unifi.Network
+			if err := json.Unmarshal([]byte(`{"purpose":"`+purpose+`","name":"n"}`), &empty); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			out, err = json.Marshal(&empty)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), `"ipv6_aliases":[]`) {
+				t.Errorf("marshal of a network without aliases must send an empty list: %s", out)
+			}
+		})
+	}
+}
+
+// Network 10.6 stores routing_table_id on each WAN network.
+func TestNetworkMarshalKeepsWANRoutingTable(t *testing.T) {
+	var n unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"wan","name":"Internet 1","routing_table_id":201}`), &n); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if n.RoutingTableID == nil || *n.RoutingTableID != 201 {
+		t.Errorf("RoutingTableID = %v, want 201", n.RoutingTableID)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"routing_table_id":201`) {
+		t.Errorf("marshal dropped routing_table_id: %s", out)
+	}
+}
+
+// Network 10.6 stores external_id and a null cloud_template on every firewall zone.
+func TestFirewallZoneRoundTripsControllerFields(t *testing.T) {
+	raw := `{"name":"Internal","zone_key":"internal","network_ids":[],"cloud_template":null,"external_id":"53b02959-ebf9-445d-8b3f-6f1c2e9d7a10"}`
+	var z unifi.FirewallZone
+	if err := json.Unmarshal([]byte(raw), &z); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&z)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"external_id":"53b02959-ebf9-445d-8b3f-6f1c2e9d7a10"`, `"cloud_template":null`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+}
+
+// Network 10.6 stores origin_id on every firewall policy.
+func TestFirewallPolicyRoundTripsOriginID(t *testing.T) {
+	raw := `{"name":"Allow DNS","action":"ALLOW","origin_id":"6abd09ef1f816fd2e03301c4"}`
+	var p unifi.FirewallPolicy
+	if err := json.Unmarshal([]byte(raw), &p); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&p)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"origin_id":"6abd09ef1f816fd2e03301c4"`) {
+		t.Errorf("marshal dropped origin_id: %s", out)
+	}
+}
