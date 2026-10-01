@@ -274,3 +274,52 @@ func TestWLANMarshalKeepsControllerFields(t *testing.T) {
 		}
 	}
 }
+
+// A UniFi gateway UI writes dhcpdv6_allow_slaac and ipv6_setting_preference on a network with
+// prefix delegation. An update must carry the stored value, send false when asked, and not
+// invent the key on a network that has none.
+func TestNetworkMarshalIPv6SLAACFields(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest} {
+		for _, tc := range []struct {
+			name, stored string
+			want, absent []string
+		}{
+			{
+				name:   "true",
+				stored: `"dhcpdv6_allow_slaac":true,"ipv6_setting_preference":"manual",`,
+				want:   []string{`"dhcpdv6_allow_slaac":true`, `"ipv6_setting_preference":"manual"`},
+			},
+			{
+				name:   "false",
+				stored: `"dhcpdv6_allow_slaac":false,"ipv6_setting_preference":"auto",`,
+				want:   []string{`"dhcpdv6_allow_slaac":false`, `"ipv6_setting_preference":"auto"`},
+			},
+			{
+				name:   "absent",
+				absent: []string{"dhcpdv6_allow_slaac", "ipv6_setting_preference"},
+			},
+		} {
+			t.Run(purpose+"/"+tc.name, func(t *testing.T) {
+				raw := `{"purpose":"` + purpose + `","name":"n",` + tc.stored + `"ipv6_interface_type":"pd","ip_subnet":"192.168.61.1/24"}`
+				var n unifi.Network
+				if err := json.Unmarshal([]byte(raw), &n); err != nil {
+					t.Fatalf("unmarshal: %v", err)
+				}
+				out, err := json.Marshal(&n)
+				if err != nil {
+					t.Fatalf("marshal: %v", err)
+				}
+				for _, want := range tc.want {
+					if !strings.Contains(string(out), want) {
+						t.Errorf("marshal dropped %s: %s", want, out)
+					}
+				}
+				for _, absent := range tc.absent {
+					if strings.Contains(string(out), absent) {
+						t.Errorf("marshal invented %s: %s", absent, out)
+					}
+				}
+			})
+		}
+	}
+}

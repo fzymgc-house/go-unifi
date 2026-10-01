@@ -141,7 +141,7 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		DHCPDV6DNS2       *string `json:"dhcpdv6_dns_2,omitempty"`
 		DHCPDV6DNS3       *string `json:"dhcpdv6_dns_3,omitempty"`
 		DHCPDV6DNS4       *string `json:"dhcpdv6_dns_4,omitempty"`
-		DHCPDV6AllowSlaac bool    `json:"dhcpdv6_allow_slaac,omitempty"`
+		DHCPDV6AllowSlaac *bool   `json:"dhcpdv6_allow_slaac,omitempty"`
 		DHCPDV6Start      *string `json:"dhcpdv6_start,omitempty"`
 		DHCPDV6Stop       *string `json:"dhcpdv6_stop,omitempty"`
 		DHCPDV6LeaseTime  *int64  `json:"dhcpdv6_leasetime,omitempty"`
@@ -399,7 +399,7 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		DHCPDV6DNS2       *string `json:"dhcpdv6_dns_2,omitempty"`
 		DHCPDV6DNS3       *string `json:"dhcpdv6_dns_3,omitempty"`
 		DHCPDV6DNS4       *string `json:"dhcpdv6_dns_4,omitempty"`
-		DHCPDV6AllowSlaac bool    `json:"dhcpdv6_allow_slaac,omitempty"`
+		DHCPDV6AllowSlaac *bool   `json:"dhcpdv6_allow_slaac,omitempty"`
 		DHCPDV6Start      *string `json:"dhcpdv6_start,omitempty"`
 		DHCPDV6Stop       *string `json:"dhcpdv6_stop,omitempty"`
 		DHCPDV6LeaseTime  *int64  `json:"dhcpdv6_leasetime,omitempty"`

@@ -526,6 +526,12 @@ func main() {
 				case "Purpose":
 					f.OmitEmpty = false
 					f.IsPointer = false
+				case "DHCPDV6AllowSlaac":
+					// The controller sets this key itself on a network with prefix
+					// delegation. A pointer lets an update leave the stored value
+					// alone, or send false.
+					f.OmitEmpty = true
+					f.IsPointer = true
 				}
 				if f.OmitEmpty && !f.IsArray {
 					switch f.FieldType {

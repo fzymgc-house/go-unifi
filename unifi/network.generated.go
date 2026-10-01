@@ -65,7 +65,7 @@ type Network struct {
 	DHCPDTimeOffset                               *int64                          `json:"dhcpd_time_offset,omitempty"` // ^0$|^-?([1-9]([0-9]{1,3})?|[1-7][0-9]{4}|[8][0-5][0-9]{3}|86[0-3][0-9]{2}|86400)$
 	DHCPDTimeOffsetEnabled                        bool                            `json:"dhcpd_time_offset_enabled"`
 	DHCPDUnifiController                          *string                         `json:"dhcpd_unifi_controller,omitempty"` // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^$
-	DHCPDV6AllowSlaac                             bool                            `json:"dhcpdv6_allow_slaac"`
+	DHCPDV6AllowSlaac                             *bool                           `json:"dhcpdv6_allow_slaac,omitempty"`
 	DHCPDV6DNS1                                   *string                         `json:"dhcpdv6_dns_1,omitempty"`
 	DHCPDV6DNS2                                   *string                         `json:"dhcpdv6_dns_2,omitempty"`
 	DHCPDV6DNS3                                   *string                         `json:"dhcpdv6_dns_3,omitempty"`
