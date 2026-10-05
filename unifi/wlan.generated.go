@@ -105,6 +105,7 @@ type WLAN struct {
 	RADIUSProfileID             string                     `json:"radiusprofile_id,omitempty"`
 	RoamClusterID               *int64                     `json:"roam_cluster_id,omitempty"`              // [0-9]|[1-2][0-9]|[3][0-1]|^$
 	RoamingAssistant6EEnabled   *bool                      `json:"roaming_assistant_6e_enabled,omitempty"` // non-generated field
+	RoamingAssistant6ERssi      *int64                     `json:"roaming_assistant_6e_rssi,omitempty"`    // non-generated field: dBm threshold, null when unset
 	RoamingAssistantNaEnabled   *bool                      `json:"roaming_assistant_na_enabled,omitempty"` // non-generated field
 	RoamingAssistantNaRssi      *int64                     `json:"roaming_assistant_na_rssi,omitempty"`    // non-generated field: dBm threshold, null when unset
 	RrmEnabled                  bool                       `json:"rrm_enabled"`
@@ -150,6 +151,7 @@ func (dst *WLAN) UnmarshalJSON(b []byte) error {
 		MinrateNaDataRateKbps  *types.Number  `json:"minrate_na_data_rate_kbps"`
 		MinrateNgDataRateKbps  *types.Number  `json:"minrate_ng_data_rate_kbps"`
 		RoamClusterID          *types.Number  `json:"roam_cluster_id"`
+		RoamingAssistant6ERssi *types.Number  `json:"roaming_assistant_6e_rssi"`
 		RoamingAssistantNaRssi *types.Number  `json:"roaming_assistant_na_rssi"`
 		ShortID                *types.Number  `json:"short_id"`
 		SaeAntiClogging        *types.Number  `json:"sae_anti_clogging"`
@@ -221,6 +223,14 @@ func (dst *WLAN) UnmarshalJSON(b []byte) error {
 		} else if string(*aux.RoamClusterID) == "" {
 			var zero int64
 			dst.RoamClusterID = &zero
+		}
+	}
+	if aux.RoamingAssistant6ERssi != nil {
+		if val, err := aux.RoamingAssistant6ERssi.Int64(); err == nil {
+			dst.RoamingAssistant6ERssi = &val
+		} else if string(*aux.RoamingAssistant6ERssi) == "" {
+			var zero int64
+			dst.RoamingAssistant6ERssi = &zero
 		}
 	}
 	if aux.RoamingAssistantNaRssi != nil {

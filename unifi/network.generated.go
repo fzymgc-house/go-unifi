@@ -152,6 +152,7 @@ type Network struct {
 	InterfaceMtuEnabled                           bool                            `json:"interface_mtu_enabled"`
 	InternetAccessEnabled                         bool                            `json:"internet_access_enabled"`
 	IsNAT                                         bool                            `json:"is_nat"`
+	IsWifiTethering                               *bool                           `json:"is_wifi_tethering,omitempty"` // non-generated field: on a WAN network, a pointer so that false survives an update
 	L2TpAllowWeakCiphers                          bool                            `json:"l2tp_allow_weak_ciphers"`
 	L2TpInterface                                 *string                         `json:"l2tp_interface,omitempty"`    // wan[2-9]?
 	L2TpLocalWANIP                                *string                         `json:"l2tp_local_wan_ip,omitempty"` // ^any$|^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
@@ -218,6 +219,7 @@ type Network struct {
 	UidVPNSyncPublicIP                            bool                            `json:"uid_vpn_sync_public_ip"`
 	UidVPNType                                    *string                         `json:"uid_vpn_type,omitempty"` // openvpn|wireguard
 	UidWorkspaceUrl                               *string                         `json:"uid_workspace_url,omitempty"`
+	UplinkIdentity                                *string                         `json:"uplink_identity,omitempty"` // non-generated field: on a WAN network, a pointer so that an empty string survives an update
 	UserGroupID                                   *string                         `json:"usergroup_id,omitempty"`
 	VLAN                                          *int64                          `json:"vlan,omitempty"` // [2-9]|[1-9][0-9]{1,2}|[1-3][0-9]{3}|400[0-9]|401[0-8]|^$
 	VLANEnabled                                   bool                            `json:"vlan_enabled"`
