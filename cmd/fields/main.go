@@ -548,6 +548,12 @@ func main() {
 					// alone, or send false.
 					f.OmitEmpty = true
 					f.IsPointer = true
+				case "MACOverrideEnabled", "WANDsliteRemoteHostAuto":
+					// A WAN network holds false in these keys. A pointer lets an
+					// update carry the stored value, and lets a create leave the
+					// key out.
+					f.OmitEmpty = true
+					f.IsPointer = true
 				}
 				if f.OmitEmpty && !f.IsArray {
 					switch f.FieldType {

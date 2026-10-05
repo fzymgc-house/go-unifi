@@ -513,6 +513,10 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		Purpose string  `json:"purpose"`
 		Enabled bool    `json:"enabled"`
 
+		ExternalID            string  `json:"external_id,omitempty"`
+		SettingPreference     *string `json:"setting_preference,omitempty"`
+		IPV6SettingPreference *string `json:"ipv6_setting_preference,omitempty"`
+
 		// WAN type fields
 		WANType         *string `json:"wan_type,omitempty"`
 		WANTypeV6       *string `json:"wan_type_v6,omitempty"`
@@ -537,9 +541,18 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		// DHCPv6 / IPv6 fields
 		WANDHCPv6PDSize       *int64                    `json:"wan_dhcpv6_pd_size,omitempty"`
 		WANDHCPv6PDSizeAuto   bool                      `json:"wan_dhcpv6_pd_size_auto"`
-		WANDHCPv6Options      []NetworkWANDHCPv6Options `json:"wan_dhcpv6_options,omitempty"`
+		WANDHCPv6Options      []NetworkWANDHCPv6Options `json:"wan_dhcpv6_options,omitzero"`
 		IPV6WANDelegationType *string                   `json:"ipv6_wan_delegation_type,omitempty"`
 		IPV6Enabled           bool                      `json:"ipv6_enabled"`
+		SingleNetworkLan      *string                   `json:"single_network_lan,omitempty"`
+
+		// DS-Lite fields
+		WANDsliteRemoteHost     *string `json:"wan_dslite_remote_host,omitempty"`
+		WANDsliteRemoteHostAuto *bool   `json:"wan_dslite_remote_host_auto,omitempty"`
+
+		// MAC override fields
+		MACOverrideEnabled *bool  `json:"mac_override_enabled,omitempty"`
+		MACOverride        string `json:"mac_override,omitempty"`
 
 		// QoS fields
 		WANEgressQOSEnabled *bool  `json:"wan_egress_qos_enabled,omitempty"`
@@ -588,6 +601,10 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		Purpose: n.Purpose,
 		Enabled: n.Enabled,
 
+		ExternalID:            n.ExternalID,
+		SettingPreference:     n.SettingPreference,
+		IPV6SettingPreference: n.IPV6SettingPreference,
+
 		// WAN type fields
 		WANType:         n.WANType,
 		WANTypeV6:       n.WANTypeV6,
@@ -615,6 +632,15 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		WANDHCPv6Options:      n.WANDHCPv6Options,
 		IPV6WANDelegationType: n.IPV6WANDelegationType,
 		IPV6Enabled:           n.WANTypeV6 != nil && *n.WANTypeV6 != "disabled",
+		SingleNetworkLan:      n.SingleNetworkLan,
+
+		// DS-Lite fields
+		WANDsliteRemoteHost:     n.WANDsliteRemoteHost,
+		WANDsliteRemoteHostAuto: n.WANDsliteRemoteHostAuto,
+
+		// MAC override fields
+		MACOverrideEnabled: n.MACOverrideEnabled,
+		MACOverride:        n.MACOverride,
 
 		// QoS fields
 		WANEgressQOSEnabled: n.WANEgressQOSEnabled,

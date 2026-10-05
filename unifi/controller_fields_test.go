@@ -221,6 +221,53 @@ func TestNetworkMarshalKeepsWANUplinkFields(t *testing.T) {
 	}
 }
 
+// Network 10.6 stores seven more keys on each WAN network. Two hold false, one holds an empty
+// string and one holds an empty list, and an update must carry each of them as stored. A WAN
+// network that holds none of the keys must not gain one.
+func TestNetworkMarshalWANKeepsStoredKeys(t *testing.T) {
+	var n unifi.Network
+	raw := `{"purpose":"wan","name":"Internet 1","external_id":"0d6a3c1e-5b7f-4a2d-9c8e-1f2a3b4c5d6e",` +
+		`"setting_preference":"manual","ipv6_setting_preference":"manual","mac_override_enabled":false,` +
+		`"single_network_lan":"","wan_dhcpv6_options":[],"wan_dslite_remote_host_auto":false}`
+	if err := json.Unmarshal([]byte(raw), &n); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"external_id":"0d6a3c1e-5b7f-4a2d-9c8e-1f2a3b4c5d6e"`,
+		`"setting_preference":"manual"`,
+		`"ipv6_setting_preference":"manual"`,
+		`"mac_override_enabled":false`,
+		`"single_network_lan":""`,
+		`"wan_dhcpv6_options":[]`,
+		`"wan_dslite_remote_host_auto":false`,
+	} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+
+	var bare unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"wan","name":"Internet 1"}`), &bare); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err = json.Marshal(&bare)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{
+		"external_id", "setting_preference", "mac_override", "single_network_lan",
+		"wan_dhcpv6_options", "wan_dslite_remote_host",
+	} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal invented %s: %s", key, out)
+		}
+	}
+}
+
 // Network 10.6 stores external_id and a null cloud_template on every firewall zone.
 func TestFirewallZoneRoundTripsControllerFields(t *testing.T) {
 	raw := `{"name":"Internal","zone_key":"internal","network_ids":[],"cloud_template":null,"external_id":"53b02959-ebf9-445d-8b3f-6f1c2e9d7a10"}`
