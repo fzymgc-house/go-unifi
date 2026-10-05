@@ -280,6 +280,22 @@ func NewResource(structName string, resourcePath string) *ResourceInfo {
 		baseType.Fields["WLANGroupID"] = NewFieldInfo("WLANGroupID", "wlangroup_id", fields.String, "", true, false, false, "")
 	case resource.StructName == "BGPConfig":
 		resource.ResourcePath = "bgp/config"
+		resource.FieldProcessor = func(name string, f *FieldInfo) error {
+			// error is a status the controller sets, and the UI never sends
+			// it. A *bool with omitempty lets a client read it and leave it
+			// out of a write by setting it to nil.
+			if name == "Error" {
+				f.OmitEmpty = true
+				f.IsPointer = true
+			}
+			// The UI sends redistribute_to_sd_wan only on a site in SD-WAN.
+			// With omitempty, false stays out of the body as it does in the
+			// UI, and true survives a read-modify-write.
+			if name == "RedistributeToSdWAN" {
+				f.OmitEmpty = true
+			}
+			return nil
+		}
 	}
 
 	return resource
