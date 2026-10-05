@@ -159,7 +159,7 @@ type Network struct {
 	LocalPort                                     *int64                          `json:"local_port,omitempty"`        // ^([1-9][0-9]{0,3}|[1-5][0-9]{4}|[6][0-4][0-9]{3}|[6][5][0-4][0-9]{2}|[6][5][5][0-2][0-9]|[6][5][5][3][0-5])$
 	LteLanEnabled                                 bool                            `json:"lte_lan_enabled"`
 	MACOverride                                   string                          `json:"mac_override"` // (^$|^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$)
-	MACOverrideEnabled                            bool                            `json:"mac_override_enabled"`
+	MACOverrideEnabled                            *bool                           `json:"mac_override_enabled,omitempty"`
 	MdnsEnabled                                   bool                            `json:"mdns_enabled"`
 	NATOutboundIPAddresses                        []NetworkNATOutboundIPAddresses `json:"nat_outbound_ip_addresses,omitempty"`
 	Name                                          *string                         `json:"name,omitempty"`         // .{1,128}
@@ -244,7 +244,7 @@ type Network struct {
 	WANDNS4                                       string                          `json:"wan_dns4"`                     // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^$
 	WANDNSPreference                              *string                         `json:"wan_dns_preference,omitempty"` // auto|manual
 	WANDsliteRemoteHost                           *string                         `json:"wan_dslite_remote_host,omitempty"`
-	WANDsliteRemoteHostAuto                       bool                            `json:"wan_dslite_remote_host_auto"`
+	WANDsliteRemoteHostAuto                       *bool                           `json:"wan_dslite_remote_host_auto,omitempty"`
 	WANEgressQOS                                  *int64                          `json:"wan_egress_qos,omitempty"` // [1-7]|^$
 	WANEgressQOSEnabled                           *bool                           `json:"wan_egress_qos_enabled,omitempty"`
 	WANFailoverPriority                           *int64                          `json:"wan_failover_priority,omitempty"`   // [1-9]
