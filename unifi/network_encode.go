@@ -570,6 +570,10 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		FirewallZoneID *string                 `json:"firewall_zone_id,omitempty"`
 		WANDHCPOptions []NetworkWANDHCPOptions `json:"wan_dhcp_options"`
 
+		// Uplink fields that the controller sets
+		IsWifiTethering *bool   `json:"is_wifi_tethering,omitempty"`
+		UplinkIdentity  *string `json:"uplink_identity,omitempty"`
+
 		// Provider capabilities
 		WANProviderCapabilities *NetworkWANProviderCapabilities `json:"wan_provider_capabilities,omitempty"`
 	}{
@@ -640,6 +644,10 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		RoutingTableID: n.RoutingTableID,
 		FirewallZoneID: n.FirewallZoneID,
 		WANDHCPOptions: orEmptyWANDHCPOptions(n.WANDHCPOptions),
+
+		// Uplink fields that the controller sets
+		IsWifiTethering: n.IsWifiTethering,
+		UplinkIdentity:  n.UplinkIdentity,
 
 		// Provider capabilities
 		WANProviderCapabilities: n.WANProviderCapabilities,
