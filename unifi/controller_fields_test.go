@@ -2,6 +2,8 @@ package unifi_test
 
 import (
 	"encoding/json"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 
@@ -321,5 +323,52 @@ func TestNetworkMarshalIPv6SLAACFields(t *testing.T) {
 				}
 			})
 		}
+	}
+}
+
+// Network 10.6 stores error and redistribute_to_sd_wan on the BGP configuration, and the UI can
+// add device_mac and redistribute_to_sd_wan_type. The endpoint takes the whole object on every
+// write, so a typed update must carry each key it read.
+func TestBGPConfigRoundTripsControllerFields(t *testing.T) {
+	raw := `{"_id":"6ac2ccc4535c0e4cd8a8e1a2","enabled":true,"error":false,"frr_bgpd_config":"router bgp 65000","uploaded_file_name":"bgpd.conf","description":"d","device_mac":"aa:bb:cc:dd:ee:ff","redistribute_to_sd_wan":true,"redistribute_to_sd_wan_type":"e1"}`
+	var c unifi.BGPConfig
+	if err := json.Unmarshal([]byte(raw), &c); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if c.Error == nil || *c.Error {
+		t.Errorf("Error = %v, want false", c.Error)
+	}
+	out, err := json.Marshal(&c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"device_mac":"aa:bb:cc:dd:ee:ff"`, `"redistribute_to_sd_wan":true`, `"redistribute_to_sd_wan_type":"e1"`, `"error":false`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+}
+
+// The UI never sends error, and it sends redistribute_to_sd_wan only on a site in SD-WAN. With
+// Error cleared, the body for a site outside SD-WAN holds the same keys a UI save sends.
+func TestBGPConfigMarshalMatchesUIBody(t *testing.T) {
+	raw := `{"_id":"6ac2ccc4535c0e4cd8a8e1a2","description":"d","enabled":true,"error":false,"frr_bgpd_config":"router bgp 65000","redistribute_to_sd_wan":false,"uploaded_file_name":"bgpd.conf"}`
+	var c unifi.BGPConfig
+	if err := json.Unmarshal([]byte(raw), &c); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	c.Error = nil
+	out, err := json.Marshal(&c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(out, &body); err != nil {
+		t.Fatalf("unmarshal body: %v", err)
+	}
+	keys := slices.Sorted(maps.Keys(body))
+	want := []string{"_id", "description", "enabled", "frr_bgpd_config", "uploaded_file_name"}
+	if !slices.Equal(keys, want) {
+		t.Errorf("body keys = %v, want %v", keys, want)
 	}
 }
