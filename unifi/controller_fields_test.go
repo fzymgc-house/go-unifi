@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/ubiquiti-community/go-unifi/unifi"
+	"github.com/ubiquiti-community/go-unifi/unifi/settings"
 )
 
 // Network 10.6 returns external_id on every network and ipv6_enabled on most.
@@ -455,5 +456,40 @@ func TestBGPConfigMarshalMatchesUIBody(t *testing.T) {
 	want := []string{"_id", "description", "enabled", "frr_bgpd_config", "uploaded_file_name"}
 	if !slices.Equal(keys, want) {
 		t.Errorf("body keys = %v, want %v", keys, want)
+	}
+}
+
+// Network 10.6 stores auto_enabled on the radio_ai setting beside enabled, and it holds every
+// channel list as strings. A typed write of the section must carry auto_enabled, or the
+// controller falls back to its default for it, and the channel lists must decode from strings.
+func TestRadioAiRoundTripsControllerFields(t *testing.T) {
+	raw := `{"key":"radio_ai","enabled":true,"auto_enabled":false,"default":true,` +
+		`"optimize":["channel"],"radios":["ng","na","6e"],"cron_expr":"0 3 * * *",` +
+		`"channels_ng":["1","6","11"],"ht_modes_ng":["20"],"exclude_devices":[],` +
+		`"setting_preference":"auto","auto_adjust_channels_to_country":true,` +
+		`"auto_channel_presets_type":"maximum_speed"}`
+	var r settings.RadioAi
+	if err := json.Unmarshal([]byte(raw), &r); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if !r.Enabled || r.AutoEnabled {
+		t.Errorf("Enabled = %v, AutoEnabled = %v, want true and false", r.Enabled, r.AutoEnabled)
+	}
+	if !slices.Equal(r.ChannelsNg, []int64{1, 6, 11}) {
+		t.Errorf("ChannelsNg = %v, want [1 6 11]", r.ChannelsNg)
+	}
+	out, err := json.Marshal(&r)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"auto_enabled":false`,
+		`"enabled":true`,
+		`"channels_ng":[1,6,11]`,
+		`"cron_expr":"0 3 * * *"`,
+	} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
 	}
 }
