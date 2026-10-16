@@ -493,3 +493,40 @@ func TestRadioAiRoundTripsControllerFields(t *testing.T) {
 		}
 	}
 }
+
+// The radio table bools are pointers, so an update can send false. A plain bool
+// with omitempty drops false, and the controller keeps the stored true.
+func TestDeviceRadioTableMarshalSendsFalse(t *testing.T) {
+	raw := `{"name":"wifi2","radio":"6e","min_rssi_enabled":true,"min_rssi":-75,"vwire_enabled":true}`
+	var r unifi.DeviceRadioTable
+	if err := json.Unmarshal([]byte(raw), &r); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if r.MinRssiEnabled == nil || !*r.MinRssiEnabled {
+		t.Fatalf("MinRssiEnabled = %v, want true", r.MinRssiEnabled)
+	}
+	if r.Dfs != nil {
+		t.Errorf("Dfs = %v, want nil for an absent key", *r.Dfs)
+	}
+
+	off := false
+	r.MinRssiEnabled = &off
+	r.VwireEnabled = &off
+	out, err := json.Marshal(&r)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"min_rssi_enabled":false`, `"vwire_enabled":false`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+	for _, key := range []string{
+		`"assisted_roaming_enabled"`, `"dfs"`, `"hard_noise_floor_enabled"`,
+		`"loadbalance_enabled"`, `"sens_level_enabled"`,
+	} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal sent unset key %s: %s", key, out)
+		}
+	}
+}

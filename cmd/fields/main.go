@@ -505,6 +505,12 @@ func main() {
 					if f.FieldType == fields.String {
 						f.CustomUnmarshalType = fields.Number
 					}
+				case "AssistedRoamingEnabled", "Dfs", "HardNoiseFloorEnabled", "LoadbalanceEnabled",
+					"MinRssiEnabled", "SensLevelEnabled", "VwireEnabled":
+					// Bools of DeviceRadioTable. A pointer lets an update send
+					// false, which a plain bool with omitempty drops, and nil
+					// leaves the stored value alone.
+					f.IsPointer = true
 				}
 
 				f.OmitEmpty = true
