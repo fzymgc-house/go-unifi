@@ -1,6 +1,9 @@
 {
     "default_zone": "true|false",
     "name": "",
-    "network_ids": [""],
-    "zone_key": ""
+    "network_ids": [
+        ""
+    ],
+    "zone_key": "",
+    "external_id": ""
 }

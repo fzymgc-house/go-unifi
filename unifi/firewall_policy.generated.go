@@ -47,6 +47,7 @@ type FirewallPolicy struct {
 	MatchIPSec            bool                       `json:"match_ip_sec"`
 	MatchOppositeProtocol bool                       `json:"match_opposite_protocol"`
 	Name                  string                     `json:"name,omitempty"`
+	OriginID              string                     `json:"origin_id,omitempty"`
 	Predefined            bool                       `json:"predefined"`
 	Protocol              string                     `json:"protocol,omitempty"` // all|tcp|udp|tcp_udp
 	Schedule              *FirewallPolicySchedule    `json:"schedule,omitempty"`

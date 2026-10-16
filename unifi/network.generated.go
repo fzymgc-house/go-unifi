@@ -65,7 +65,7 @@ type Network struct {
 	DHCPDTimeOffset                               *int64                          `json:"dhcpd_time_offset,omitempty"` // ^0$|^-?([1-9]([0-9]{1,3})?|[1-7][0-9]{4}|[8][0-5][0-9]{3}|86[0-3][0-9]{2}|86400)$
 	DHCPDTimeOffsetEnabled                        bool                            `json:"dhcpd_time_offset_enabled"`
 	DHCPDUnifiController                          *string                         `json:"dhcpd_unifi_controller,omitempty"` // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^$
-	DHCPDV6AllowSlaac                             bool                            `json:"dhcpdv6_allow_slaac"`
+	DHCPDV6AllowSlaac                             *bool                           `json:"dhcpdv6_allow_slaac,omitempty"`
 	DHCPDV6DNS1                                   *string                         `json:"dhcpdv6_dns_1,omitempty"`
 	DHCPDV6DNS2                                   *string                         `json:"dhcpdv6_dns_2,omitempty"`
 	DHCPDV6DNS3                                   *string                         `json:"dhcpdv6_dns_3,omitempty"`
@@ -88,6 +88,7 @@ type Network struct {
 	DomainName                                    *string                         `json:"domain_name,omitempty"` // (?=^.{3,253}$)(^((?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.)+[a-zA-Z]{2,63}$)|^$|[a-zA-Z0-9-]{1,63}
 	Enabled                                       bool                            `json:"enabled"`
 	ExposedToSiteVPN                              bool                            `json:"exposed_to_site_vpn"`
+	ExternalID                                    string                          `json:"external_id,omitempty"` // non-generated field: controller-assigned UUID, kept on update
 	FirewallZoneID                                *string                         `json:"firewall_zone_id,omitempty"`
 	GatewayDevice                                 string                          `json:"gateway_device"`         // (^$|^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$)
 	GatewayType                                   *string                         `json:"gateway_type,omitempty"` // default|switch
@@ -132,6 +133,7 @@ type Network struct {
 	IPSubnet                                      *string                         `json:"ip_subnet,omitempty"` // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\/([1-9]|[1-2][0-9]|3[0-2])$
 	IPV6Aliases                                   []string                        `json:"ipv6_aliases,omitempty"`
 	IPV6ClientAddressAssignment                   *string                         `json:"ipv6_client_address_assignment,omitempty"` // slaac|dhcpv6
+	IPV6Enabled                                   *bool                           `json:"ipv6_enabled,omitempty"`                   // non-generated field: Network 10.x stores the IPv6 toggle here
 	IPV6InterfaceType                             *string                         `json:"ipv6_interface_type,omitempty"`            // static|pd|single_network|none
 	IPV6PDAutoPrefixidEnabled                     bool                            `json:"ipv6_pd_auto_prefixid_enabled"`
 	IPV6PDInterface                               *string                         `json:"ipv6_pd_interface,omitempty"` // wan[2-9]?
@@ -150,7 +152,7 @@ type Network struct {
 	InterfaceMtuEnabled                           bool                            `json:"interface_mtu_enabled"`
 	InternetAccessEnabled                         bool                            `json:"internet_access_enabled"`
 	IsNAT                                         bool                            `json:"is_nat"`
-	IsWifiTethering                               bool                            `json:"is_wifi_tethering"`
+	IsWifiTethering                               *bool                           `json:"is_wifi_tethering,omitempty"`
 	L2TpAllowWeakCiphers                          bool                            `json:"l2tp_allow_weak_ciphers"`
 	L2TpInterface                                 *string                         `json:"l2tp_interface,omitempty"`            // wan[2-9]?
 	L2TpLocalWANIP                                *string                         `json:"l2tp_local_wan_ip,omitempty"`         // ^any$|^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$
@@ -161,7 +163,7 @@ type Network struct {
 	LocalVPNSubnetsMode                           *string                         `json:"local_vpn_subnets_mode,omitempty"`    // all|selected_networks|custom
 	LteLanEnabled                                 *bool                           `json:"lte_lan_enabled,omitempty"`
 	MACOverride                                   string                          `json:"mac_override"` // (^$|^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$)
-	MACOverrideEnabled                            bool                            `json:"mac_override_enabled"`
+	MACOverrideEnabled                            *bool                           `json:"mac_override_enabled,omitempty"`
 	MdnsEnabled                                   bool                            `json:"mdns_enabled"`
 	MssClamp                                      *string                         `json:"mss_clamp,omitempty"`          // auto|custom|disabled
 	MssClampIPV6                                  *string                         `json:"mss_clamp_ipv6,omitempty"`     // auto|custom|disabled
@@ -200,9 +202,10 @@ type Network struct {
 	RemoteVPNSubnets                              []string                        `json:"remote_vpn_subnets,omitempty"` // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\/([1-9]|[1-2][0-9]|3[0-2])$|^$
 	ReportWANEvent                                bool                            `json:"report_wan_event"`
 	RequireMschapv2                               bool                            `json:"require_mschapv2"`
-	RouteDistance                                 *int64                          `json:"route_distance,omitempty"`  // ^[1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]$|^$
-	RoutedLagIDX                                  *int64                          `json:"routed_lag_idx,omitempty"`  // ([0-9]|[1-9][0-9])
-	RoutedPortIDX                                 *int64                          `json:"routed_port_idx,omitempty"` // ([0-9]|[1-9][0-9])
+	RouteDistance                                 *int64                          `json:"route_distance,omitempty"`   // ^[1-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5]$|^$
+	RoutedLagIDX                                  *int64                          `json:"routed_lag_idx,omitempty"`   // ([0-9]|[1-9][0-9])
+	RoutedPortIDX                                 *int64                          `json:"routed_port_idx,omitempty"`  // ([0-9]|[1-9][0-9])
+	RoutingTableID                                *int64                          `json:"routing_table_id,omitempty"` // non-generated field: routing table of a WAN network
 	SdwanRemoteSiteID                             *string                         `json:"sdwan_remote_site_id,omitempty"`
 	SdwanUnderlay                                 bool                            `json:"sdwan_underlay"`
 	ServerCrt                                     *string                         `json:"x_server_crt,omitempty"`
@@ -258,7 +261,7 @@ type Network struct {
 	WANDNS4                                       string                          `json:"wan_dns4"`                     // ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$|^$
 	WANDNSPreference                              *string                         `json:"wan_dns_preference,omitempty"` // auto|manual
 	WANDsliteRemoteHost                           *string                         `json:"wan_dslite_remote_host,omitempty"`
-	WANDsliteRemoteHostAuto                       bool                            `json:"wan_dslite_remote_host_auto"`
+	WANDsliteRemoteHostAuto                       *bool                           `json:"wan_dslite_remote_host_auto,omitempty"`
 	WANEgressQOS                                  *int64                          `json:"wan_egress_qos,omitempty"` // [1-7]|^$
 	WANEgressQOSEnabled                           *bool                           `json:"wan_egress_qos_enabled,omitempty"`
 	WANFailoverPriority                           *int64                          `json:"wan_failover_priority,omitempty"`   // [1-9]

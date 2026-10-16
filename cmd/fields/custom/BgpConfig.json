@@ -2,5 +2,9 @@
   "enabled": "true|false",
   "frr_bgpd_config": "",
   "uploaded_file_name": ".{0,256}",
-  "description": ".{0,128}"
+  "description": ".{0,128}",
+  "device_mac": "^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$",
+  "error": "true|false",
+  "redistribute_to_sd_wan": "true|false",
+  "redistribute_to_sd_wan_type": "e1|e2"
 }

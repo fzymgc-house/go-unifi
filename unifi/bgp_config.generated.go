@@ -31,10 +31,14 @@ type BGPConfig struct {
 	NoDelete bool   `json:"attr_no_delete,omitempty"`
 	NoEdit   bool   `json:"attr_no_edit,omitempty"`
 
-	Config           string `json:"frr_bgpd_config,omitempty"`
-	Description      string `json:"description,omitempty"` // .{0,128}
-	Enabled          bool   `json:"enabled"`
-	UploadedFileName string `json:"uploaded_file_name,omitempty"` // .{0,256}
+	Config                  string `json:"frr_bgpd_config,omitempty"`
+	Description             string `json:"description,omitempty"` // .{0,128}
+	DeviceMAC               string `json:"device_mac,omitempty"`  // ^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$
+	Enabled                 bool   `json:"enabled"`
+	Error                   *bool  `json:"error,omitempty"`
+	RedistributeToSdWAN     bool   `json:"redistribute_to_sd_wan,omitempty"`
+	RedistributeToSdWANType string `json:"redistribute_to_sd_wan_type,omitempty"` // e1|e2
+	UploadedFileName        string `json:"uploaded_file_name,omitempty"`          // .{0,256}
 }
 
 func (dst *BGPConfig) UnmarshalJSON(b []byte) error {

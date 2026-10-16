@@ -82,7 +82,8 @@ type PortProfile struct {
 	StpEdgeState                 string                 `json:"stp_edge_state,omitempty"` // enabled|disabled
 	StpPortMode                  bool                   `json:"stp_port_mode"`
 	StpUplink                    bool                   `json:"stp_uplink"`
-	TaggedVLANMgmt               string                 `json:"tagged_vlan_mgmt,omitempty"` // auto|block_all|custom
+	TaggedNetworkIDs             []string               `json:"tagged_networkconf_ids,omitempty"` // non-generated field
+	TaggedVLANMgmt               string                 `json:"tagged_vlan_mgmt,omitempty"`       // auto|block_all|custom
 	VoiceNetworkID               string                 `json:"voice_networkconf_id,omitempty"`
 }
 

@@ -33,10 +33,12 @@ type FirewallZone struct {
 	NoDelete bool   `json:"attr_no_delete,omitempty"`
 	NoEdit   bool   `json:"attr_no_edit,omitempty"`
 
-	DefaultZone *bool    `json:"default_zone,omitempty"`
-	Name        string   `json:"name,omitempty"`
-	NetworkIDs  []string `json:"network_ids"`
-	ZoneKey     string   `json:"zone_key,omitempty"`
+	CloudTemplate json.RawMessage `json:"cloud_template,omitempty"` // non-generated field: Network 10.6 stores null on every zone, so the value round-trips raw
+	DefaultZone   *bool           `json:"default_zone,omitempty"`
+	ExternalID    string          `json:"external_id,omitempty"`
+	Name          string          `json:"name,omitempty"`
+	NetworkIDs    []string        `json:"network_ids"`
+	ZoneKey       string          `json:"zone_key,omitempty"`
 }
 
 func (dst *FirewallZone) UnmarshalJSON(b []byte) error {

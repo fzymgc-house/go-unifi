@@ -95,7 +95,7 @@ type Device struct {
 	LteUsername                           string                             `json:"lte_username,omitempty"`
 	MbbOverrides                          *DeviceMbbOverrides                `json:"mbb_overrides,omitempty"`
 	MeshMloEnabled                        bool                               `json:"mesh_mlo_enabled,omitempty"`
-	MeshStaVapEnabled                     bool                               `json:"mesh_sta_vap_enabled,omitempty"`
+	MeshStaVapEnabled                     *bool                              `json:"mesh_sta_vap_enabled,omitempty"`
 	MgmtNetworkID                         string                             `json:"mgmt_network_id,omitempty"` // [\d\w-]+
 	Model                                 string                             `json:"model,omitempty"`
 	Name                                  string                             `json:"name,omitempty"` // .{0,128}
@@ -129,7 +129,7 @@ type Device struct {
 	StationMode                           string                             `json:"station_mode,omitempty"` // ptp|ptmp|wifi
 	StpPriority                           *int64                             `json:"stp_priority,omitempty"` // 0|4096|8192|12288|16384|20480|24576|28672|32768|36864|40960|45056|49152|53248|57344|61440
 	StpVersion                            string                             `json:"stp_version,omitempty"`  // stp|rstp|disabled
-	SwitchVLANEnabled                     bool                               `json:"switch_vlan_enabled,omitempty"`
+	SwitchVLANEnabled                     *bool                              `json:"switch_vlan_enabled,omitempty"`
 	Type                                  string                             `json:"type,omitempty"`
 	UbbPairName                           string                             `json:"ubb_pair_name,omitempty"`                  // .{1,128}
 	UpsShutdownRemainingMinutes           *int64                             `json:"ups_shutdown_remaining_minutes,omitempty"` // [1-9]|1[0-5]
@@ -1176,21 +1176,21 @@ type DeviceRadioTable struct {
 	AntennaGain           *int64                   `json:"antenna_gain,omitempty"` // ^-?([0-9]|[1-9][0-9])
 	AntennaID             *int64                   `json:"antenna_id,omitempty"`   // -1|[0-9]
 	Channel               string                   `json:"channel,omitempty"`      // [0-9]|[1][0-4]|1.5|2.5|3.5|4.5|5.5|6.5|5|16|17|21|25|29|33|34|36|37|38|40|41|42|44|45|46|48|49|52|53|56|57|60|61|64|65|69|73|77|81|85|89|93|97|100|101|104|105|108|109|112|113|117|116|120|121|124|125|128|129|132|133|136|137|140|141|144|145|149|153|157|161|165|169|173|177|181|183|184|185|187|188|189|192|193|196|197|201|205|209|213|217|221|225|229|233|auto
-	Dfs                   bool                     `json:"dfs,omitempty"`
-	HardNoiseFloorEnabled bool                     `json:"hard_noise_floor_enabled,omitempty"`
+	Dfs                   *bool                    `json:"dfs,omitempty"`
+	HardNoiseFloorEnabled *bool                    `json:"hard_noise_floor_enabled,omitempty"`
 	Ht                    *int64                   `json:"ht,omitempty"` // 20|40|80|160|240|320|1080|2160|4320
-	LoadbalanceEnabled    bool                     `json:"loadbalance_enabled,omitempty"`
+	LoadbalanceEnabled    *bool                    `json:"loadbalance_enabled,omitempty"`
 	Maxsta                *int64                   `json:"maxsta,omitempty"`   // [1-9]|[1-9][0-9]|1[0-9]{2}|200|^$
 	MinRssi               *int64                   `json:"min_rssi,omitempty"` // ^-(6[7-9]|[7-8][0-9]|90)$
-	MinRssiEnabled        bool                     `json:"min_rssi_enabled,omitempty"`
+	MinRssiEnabled        *bool                    `json:"min_rssi_enabled,omitempty"`
 	Name                  string                   `json:"name,omitempty"`
 	Radio                 string                   `json:"radio,omitempty"` // ng|na|ad|6e
 	RadioIDentifiers      []DeviceRadioIDentifiers `json:"radio_identifiers,omitempty"`
 	SensLevel             *int64                   `json:"sens_level,omitempty"` // ^-([5-8][0-9]|90)$
-	SensLevelEnabled      bool                     `json:"sens_level_enabled,omitempty"`
+	SensLevelEnabled      *bool                    `json:"sens_level_enabled,omitempty"`
 	TxPower               string                   `json:"tx_power,omitempty"`      // [\d]+|auto
 	TxPowerMode           string                   `json:"tx_power_mode,omitempty"` // auto|medium|high|low|custom|disabled
-	VwireEnabled          bool                     `json:"vwire_enabled,omitempty"`
+	VwireEnabled          *bool                    `json:"vwire_enabled,omitempty"`
 }
 
 func (dst *DeviceRadioTable) UnmarshalJSON(b []byte) error {

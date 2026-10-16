@@ -1,0 +1,532 @@
+package unifi_test
+
+import (
+	"encoding/json"
+	"maps"
+	"slices"
+	"strings"
+	"testing"
+
+	"github.com/ubiquiti-community/go-unifi/unifi"
+	"github.com/ubiquiti-community/go-unifi/unifi/settings"
+)
+
+// Network 10.6 returns external_id on every network and ipv6_enabled on most.
+// A typed read-modify-write must carry both, or the update deletes them.
+func TestNetworkMarshalKeepsControllerFields(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest, unifi.PurposeVLANOnly} {
+		t.Run(purpose, func(t *testing.T) {
+			raw := `{"purpose":"` + purpose + `","name":"n","external_id":"e460f890-5af6-4a4c-a68b-7de25dfc526a","ipv6_enabled":true,"ip_subnet":"192.168.40.1/22"}`
+			var n unifi.Network
+			if err := json.Unmarshal([]byte(raw), &n); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if n.ExternalID != "e460f890-5af6-4a4c-a68b-7de25dfc526a" {
+				t.Errorf("ExternalID = %q", n.ExternalID)
+			}
+			if n.IPV6Enabled == nil || !*n.IPV6Enabled {
+				t.Errorf("IPV6Enabled = %v, want true", n.IPV6Enabled)
+			}
+			out, err := json.Marshal(&n)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			for _, want := range []string{`"external_id":"e460f890-5af6-4a4c-a68b-7de25dfc526a"`, `"ipv6_enabled":true`} {
+				if !strings.Contains(string(out), want) {
+					t.Errorf("marshal dropped %s: %s", want, out)
+				}
+			}
+		})
+	}
+}
+
+// A network the controller stores without ipv6_enabled must not gain the key on update.
+func TestNetworkMarshalOmitsAbsentIPv6Toggle(t *testing.T) {
+	var n unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"vlan-only","name":"IoT","vlan":3020}`), &n); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(out), "ipv6_enabled") {
+		t.Errorf("marshal invented ipv6_enabled: %s", out)
+	}
+}
+
+// The nine portconf keys Network 10.6 stores on a port profile that the generated struct lacked.
+func TestPortProfileRoundTripsControllerFields(t *testing.T) {
+	raw := `{
+		"_id": "5f1f9a4e9c9b7d0a4c3a1b2c",
+		"name": "AllMainDefault",
+		"eee_enabled": false,
+		"flow_control_enabled": true,
+		"link_debounce_auto": true,
+		"multicast_router_mode": "NONE",
+		"precision_time_protocol_enabled": true,
+		"stp_bpdu_guard_enabled": false,
+		"stp_edge_state": "disabled",
+		"stp_uplink": false,
+		"tagged_networkconf_ids": ["604d59e39c9b7d1005aabaad"]
+	}`
+	var p unifi.PortProfile
+	if err := json.Unmarshal([]byte(raw), &p); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if !p.FlowControlEnabled || p.EeeEnabled {
+		t.Errorf("flow_control_enabled=%v eee_enabled=%v", p.FlowControlEnabled, p.EeeEnabled)
+	}
+	if p.MulticastRouterMode != "NONE" || p.StpEdgeState != "disabled" {
+		t.Errorf("multicast_router_mode=%q stp_edge_state=%q", p.MulticastRouterMode, p.StpEdgeState)
+	}
+	out, err := json.Marshal(&p)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"eee_enabled":false`, `"flow_control_enabled":true`, `"link_debounce_auto":true`, `"multicast_router_mode":"NONE"`,
+		`"precision_time_protocol_enabled":true`, `"stp_bpdu_guard_enabled":false`, `"stp_edge_state":"disabled"`,
+		`"stp_uplink":false`, `"tagged_networkconf_ids":["604d59e39c9b7d1005aabaad"]`,
+	} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s", want)
+		}
+	}
+}
+
+// The v2 apgroups endpoint returns for_wlanconf on every group. A false value must survive a PUT.
+func TestAPGroupRoundTripsForWLANConf(t *testing.T) {
+	var g unifi.APGroup
+	if err := json.Unmarshal([]byte(`{"_id":"604d4e579c9b7d1005aaba9c","name":"All APs","device_macs":[],"for_wlanconf":false}`), &g); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if g.ForWLANConf == nil || *g.ForWLANConf {
+		t.Fatalf("ForWLANConf = %v, want false", g.ForWLANConf)
+	}
+	out, err := json.Marshal(&g)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"for_wlanconf":false`) {
+		t.Errorf("marshal dropped for_wlanconf: %s", out)
+	}
+}
+
+// A network's zone is firewall_zone_id. The controller replaces the whole object on update, so an
+// encoder that drops the key moves the network back to its default zone.
+func TestNetworkMarshalKeepsFirewallZone(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest, unifi.PurposeVLANOnly, unifi.PurposeWAN} {
+		t.Run(purpose, func(t *testing.T) {
+			raw := `{"purpose":"` + purpose + `","name":"n","firewall_zone_id":"6abd09ef1f816fd2e03301ab"}`
+			var n unifi.Network
+			if err := json.Unmarshal([]byte(raw), &n); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			out, err := json.Marshal(&n)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), `"firewall_zone_id":"6abd09ef1f816fd2e03301ab"`) {
+				t.Errorf("marshal dropped firewall_zone_id: %s", out)
+			}
+		})
+	}
+}
+
+// ipv6_aliases holds extra IPv6 addresses on a LAN network, such as a ULA gateway beside a
+// delegated prefix. The LAN encoders always send it, as they send ip_aliases.
+func TestNetworkMarshalKeepsIPv6Aliases(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest} {
+		t.Run(purpose, func(t *testing.T) {
+			raw := `{"purpose":"` + purpose + `","name":"n","ipv6_interface_type":"pd","ipv6_aliases":["fd00:601::1/64"]}`
+			var n unifi.Network
+			if err := json.Unmarshal([]byte(raw), &n); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if len(n.IPV6Aliases) != 1 || n.IPV6Aliases[0] != "fd00:601::1/64" {
+				t.Errorf("IPV6Aliases = %v", n.IPV6Aliases)
+			}
+			out, err := json.Marshal(&n)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), `"ipv6_aliases":["fd00:601::1/64"]`) {
+				t.Errorf("marshal dropped ipv6_aliases: %s", out)
+			}
+
+			var empty unifi.Network
+			if err := json.Unmarshal([]byte(`{"purpose":"`+purpose+`","name":"n"}`), &empty); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			out, err = json.Marshal(&empty)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if !strings.Contains(string(out), `"ipv6_aliases":[]`) {
+				t.Errorf("marshal of a network without aliases must send an empty list: %s", out)
+			}
+		})
+	}
+}
+
+// Network 10.6 stores routing_table_id on each WAN network.
+func TestNetworkMarshalKeepsWANRoutingTable(t *testing.T) {
+	var n unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"wan","name":"Internet 1","routing_table_id":201}`), &n); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if n.RoutingTableID == nil || *n.RoutingTableID != 201 {
+		t.Errorf("RoutingTableID = %v, want 201", n.RoutingTableID)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"routing_table_id":201`) {
+		t.Errorf("marshal dropped routing_table_id: %s", out)
+	}
+}
+
+// Network 10.6 stores is_wifi_tethering and uplink_identity on each WAN network, as false and
+// an empty string. An update must carry both values, and must not invent the keys on a WAN
+// network that has none.
+func TestNetworkMarshalKeepsWANUplinkFields(t *testing.T) {
+	var n unifi.Network
+	raw := `{"purpose":"wan","name":"Internet 1","is_wifi_tethering":false,"uplink_identity":""}`
+	if err := json.Unmarshal([]byte(raw), &n); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"is_wifi_tethering":false`, `"uplink_identity":""`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+
+	var bare unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"wan","name":"Internet 1"}`), &bare); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err = json.Marshal(&bare)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{"is_wifi_tethering", "uplink_identity"} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal invented %s: %s", key, out)
+		}
+	}
+}
+
+// Network 10.6 stores seven more keys on each WAN network. Two hold false, one holds an empty
+// string and one holds an empty list, and an update must carry each of them as stored. A WAN
+// network that holds none of the keys must not gain one.
+func TestNetworkMarshalWANKeepsStoredKeys(t *testing.T) {
+	var n unifi.Network
+	raw := `{"purpose":"wan","name":"Internet 1","external_id":"0d6a3c1e-5b7f-4a2d-9c8e-1f2a3b4c5d6e",` +
+		`"setting_preference":"manual","ipv6_setting_preference":"manual","mac_override_enabled":false,` +
+		`"single_network_lan":"","wan_dhcpv6_options":[],"wan_dslite_remote_host_auto":false}`
+	if err := json.Unmarshal([]byte(raw), &n); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"external_id":"0d6a3c1e-5b7f-4a2d-9c8e-1f2a3b4c5d6e"`,
+		`"setting_preference":"manual"`,
+		`"ipv6_setting_preference":"manual"`,
+		`"mac_override_enabled":false`,
+		`"single_network_lan":""`,
+		`"wan_dhcpv6_options":[]`,
+		`"wan_dslite_remote_host_auto":false`,
+	} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+
+	var bare unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"wan","name":"Internet 1"}`), &bare); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err = json.Marshal(&bare)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{
+		"external_id", "setting_preference", "mac_override", "single_network_lan",
+		"wan_dhcpv6_options", "wan_dslite_remote_host",
+	} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal invented %s: %s", key, out)
+		}
+	}
+}
+
+// Network 10.6 stores external_id and a null cloud_template on every firewall zone.
+func TestFirewallZoneRoundTripsControllerFields(t *testing.T) {
+	raw := `{"name":"Internal","zone_key":"internal","network_ids":[],"cloud_template":null,"external_id":"53b02959-ebf9-445d-8b3f-6f1c2e9d7a10"}`
+	var z unifi.FirewallZone
+	if err := json.Unmarshal([]byte(raw), &z); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&z)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"external_id":"53b02959-ebf9-445d-8b3f-6f1c2e9d7a10"`, `"cloud_template":null`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+}
+
+// Network 10.6 stores origin_id on every firewall policy.
+func TestFirewallPolicyRoundTripsOriginID(t *testing.T) {
+	raw := `{"name":"Allow DNS","action":"ALLOW","origin_id":"6abd09ef1f816fd2e03301c4"}`
+	var p unifi.FirewallPolicy
+	if err := json.Unmarshal([]byte(raw), &p); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&p)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"origin_id":"6abd09ef1f816fd2e03301c4"`) {
+		t.Errorf("marshal dropped origin_id: %s", out)
+	}
+}
+
+// Network 10.6 stores eleven keys on a WLAN that the generated struct did not model: the beacon
+// name toggle, DNS assistance, the controller's UUID and short id, the IoT locks, whether the
+// key was generated, and the roaming assistant. A typed update must carry them, or it deletes
+// them. The two roaming thresholds and short_id are numbers that some WLANs hold as null.
+func TestWLANMarshalKeepsControllerFields(t *testing.T) {
+	raw := `{"name":"w","advertise_device_name_in_beacon":false,"dns_assistance_mode":"off",` +
+		`"external_id":"e38e00e9-d691-4cb1-8c7e-fa75c03016fb","iot_channel_lock":false,"iot_dtim_lock":true,` +
+		`"passphrase_autogenerated":false,"roaming_assistant_6e_enabled":false,"roaming_assistant_6e_rssi":-88,` +
+		`"roaming_assistant_na_enabled":false,"roaming_assistant_na_rssi":-75,"short_id":5}`
+	var w unifi.WLAN
+	if err := json.Unmarshal([]byte(raw), &w); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if w.RoamingAssistant6ERssi == nil || *w.RoamingAssistant6ERssi != -88 {
+		t.Errorf("RoamingAssistant6ERssi = %v, want -88", w.RoamingAssistant6ERssi)
+	}
+	if w.RoamingAssistantNaRssi == nil || *w.RoamingAssistantNaRssi != -75 {
+		t.Errorf("RoamingAssistantNaRssi = %v, want -75", w.RoamingAssistantNaRssi)
+	}
+	if w.ShortID == nil || *w.ShortID != 5 {
+		t.Errorf("ShortID = %v, want 5", w.ShortID)
+	}
+	out, err := json.Marshal(&w)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"advertise_device_name_in_beacon":false`,
+		`"dns_assistance_mode":"off"`,
+		`"external_id":"e38e00e9-d691-4cb1-8c7e-fa75c03016fb"`,
+		`"iot_channel_lock":false`,
+		`"iot_dtim_lock":true`,
+		`"passphrase_autogenerated":false`,
+		`"roaming_assistant_6e_enabled":false`,
+		`"roaming_assistant_6e_rssi":-88`,
+		`"roaming_assistant_na_enabled":false`,
+		`"roaming_assistant_na_rssi":-75`,
+		`"short_id":5`,
+	} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+
+	// A WLAN that holds null for the numbers and omits the toggles must not gain a value.
+	var sparse unifi.WLAN
+	if err := json.Unmarshal([]byte(`{"name":"w","roaming_assistant_6e_rssi":null,"roaming_assistant_na_rssi":null,"short_id":null}`), &sparse); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err = json.Marshal(&sparse)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{"roaming_assistant_6e_rssi", "roaming_assistant_na_rssi", "short_id", "iot_dtim_lock", "external_id"} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal invented %s: %s", key, out)
+		}
+	}
+}
+
+// A UniFi gateway UI writes dhcpdv6_allow_slaac and ipv6_setting_preference on a network with
+// prefix delegation. An update must carry the stored value, send false when asked, and not
+// invent the key on a network that has none.
+func TestNetworkMarshalIPv6SLAACFields(t *testing.T) {
+	for _, purpose := range []string{unifi.PurposeCorporate, unifi.PurposeGuest} {
+		for _, tc := range []struct {
+			name, stored string
+			want, absent []string
+		}{
+			{
+				name:   "true",
+				stored: `"dhcpdv6_allow_slaac":true,"ipv6_setting_preference":"manual",`,
+				want:   []string{`"dhcpdv6_allow_slaac":true`, `"ipv6_setting_preference":"manual"`},
+			},
+			{
+				name:   "false",
+				stored: `"dhcpdv6_allow_slaac":false,"ipv6_setting_preference":"auto",`,
+				want:   []string{`"dhcpdv6_allow_slaac":false`, `"ipv6_setting_preference":"auto"`},
+			},
+			{
+				name:   "absent",
+				absent: []string{"dhcpdv6_allow_slaac", "ipv6_setting_preference"},
+			},
+		} {
+			t.Run(purpose+"/"+tc.name, func(t *testing.T) {
+				raw := `{"purpose":"` + purpose + `","name":"n",` + tc.stored + `"ipv6_interface_type":"pd","ip_subnet":"192.168.61.1/24"}`
+				var n unifi.Network
+				if err := json.Unmarshal([]byte(raw), &n); err != nil {
+					t.Fatalf("unmarshal: %v", err)
+				}
+				out, err := json.Marshal(&n)
+				if err != nil {
+					t.Fatalf("marshal: %v", err)
+				}
+				for _, want := range tc.want {
+					if !strings.Contains(string(out), want) {
+						t.Errorf("marshal dropped %s: %s", want, out)
+					}
+				}
+				for _, absent := range tc.absent {
+					if strings.Contains(string(out), absent) {
+						t.Errorf("marshal invented %s: %s", absent, out)
+					}
+				}
+			})
+		}
+	}
+}
+
+// Network 10.6 stores error and redistribute_to_sd_wan on the BGP configuration, and the UI can
+// add device_mac and redistribute_to_sd_wan_type. The endpoint takes the whole object on every
+// write, so a typed update must carry each key it read.
+func TestBGPConfigRoundTripsControllerFields(t *testing.T) {
+	raw := `{"_id":"6ac2ccc4535c0e4cd8a8e1a2","enabled":true,"error":false,"frr_bgpd_config":"router bgp 65000","uploaded_file_name":"bgpd.conf","description":"d","device_mac":"aa:bb:cc:dd:ee:ff","redistribute_to_sd_wan":true,"redistribute_to_sd_wan_type":"e1"}`
+	var c unifi.BGPConfig
+	if err := json.Unmarshal([]byte(raw), &c); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if c.Error == nil || *c.Error {
+		t.Errorf("Error = %v, want false", c.Error)
+	}
+	out, err := json.Marshal(&c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"device_mac":"aa:bb:cc:dd:ee:ff"`, `"redistribute_to_sd_wan":true`, `"redistribute_to_sd_wan_type":"e1"`, `"error":false`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+}
+
+// The UI never sends error, and it sends redistribute_to_sd_wan only on a site in SD-WAN. With
+// Error cleared, the body for a site outside SD-WAN holds the same keys a UI save sends.
+func TestBGPConfigMarshalMatchesUIBody(t *testing.T) {
+	raw := `{"_id":"6ac2ccc4535c0e4cd8a8e1a2","description":"d","enabled":true,"error":false,"frr_bgpd_config":"router bgp 65000","redistribute_to_sd_wan":false,"uploaded_file_name":"bgpd.conf"}`
+	var c unifi.BGPConfig
+	if err := json.Unmarshal([]byte(raw), &c); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	c.Error = nil
+	out, err := json.Marshal(&c)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	var body map[string]any
+	if err := json.Unmarshal(out, &body); err != nil {
+		t.Fatalf("unmarshal body: %v", err)
+	}
+	keys := slices.Sorted(maps.Keys(body))
+	want := []string{"_id", "description", "enabled", "frr_bgpd_config", "uploaded_file_name"}
+	if !slices.Equal(keys, want) {
+		t.Errorf("body keys = %v, want %v", keys, want)
+	}
+}
+
+// Network 10.6 stores auto_enabled on the radio_ai setting beside enabled, and it holds every
+// channel list as strings. A typed write of the section must carry auto_enabled, or the
+// controller falls back to its default for it, and the channel lists must decode from strings.
+func TestRadioAiRoundTripsControllerFields(t *testing.T) {
+	raw := `{"key":"radio_ai","enabled":true,"auto_enabled":false,"default":true,` +
+		`"optimize":["channel"],"radios":["ng","na","6e"],"cron_expr":"0 3 * * *",` +
+		`"channels_ng":["1","6","11"],"ht_modes_ng":["20"],"exclude_devices":[],` +
+		`"setting_preference":"auto","auto_adjust_channels_to_country":true,` +
+		`"auto_channel_presets_type":"maximum_speed"}`
+	var r settings.RadioAi
+	if err := json.Unmarshal([]byte(raw), &r); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if !r.Enabled || r.AutoEnabled {
+		t.Errorf("Enabled = %v, AutoEnabled = %v, want true and false", r.Enabled, r.AutoEnabled)
+	}
+	if !slices.Equal(r.ChannelsNg, []int64{1, 6, 11}) {
+		t.Errorf("ChannelsNg = %v, want [1 6 11]", r.ChannelsNg)
+	}
+	out, err := json.Marshal(&r)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{
+		`"auto_enabled":false`,
+		`"enabled":true`,
+		`"channels_ng":[1,6,11]`,
+		`"cron_expr":"0 3 * * *"`,
+	} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+}
+
+// The radio table bools are pointers, so an update can send false. A plain bool
+// with omitempty drops false, and the controller keeps the stored true.
+func TestDeviceRadioTableMarshalSendsFalse(t *testing.T) {
+	raw := `{"name":"wifi2","radio":"6e","min_rssi_enabled":true,"min_rssi":-75,"vwire_enabled":true}`
+	var r unifi.DeviceRadioTable
+	if err := json.Unmarshal([]byte(raw), &r); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if r.MinRssiEnabled == nil || !*r.MinRssiEnabled {
+		t.Fatalf("MinRssiEnabled = %v, want true", r.MinRssiEnabled)
+	}
+	if r.Dfs != nil {
+		t.Errorf("Dfs = %v, want nil for an absent key", *r.Dfs)
+	}
+
+	off := false
+	r.MinRssiEnabled = &off
+	r.VwireEnabled = &off
+	out, err := json.Marshal(&r)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"min_rssi_enabled":false`, `"vwire_enabled":false`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+	for _, key := range []string{
+		`"assisted_roaming_enabled"`, `"dfs"`, `"hard_noise_floor_enabled"`,
+		`"loadbalance_enabled"`, `"sens_level_enabled"`,
+	} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal sent unset key %s: %s", key, out)
+		}
+	}
+}

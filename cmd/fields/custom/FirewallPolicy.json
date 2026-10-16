@@ -82,5 +82,6 @@
     "ip_group_id": "",
     "port_matching_type": "ANY|SPECIFIC|LIST|OBJECT",
     "zone_id": ""
-  }
+  },
+  "origin_id": ""
 }

@@ -22,8 +22,9 @@ type APGroup struct {
 	NoDelete bool   `json:"attr_no_delete,omitempty"`
 	NoEdit   bool   `json:"attr_no_edit,omitempty"`
 
-	Name       string   `json:"name"`
-	DeviceMacs []string `json:"device_macs"`
+	Name        string   `json:"name"`
+	DeviceMacs  []string `json:"device_macs"`
+	ForWLANConf *bool    `json:"for_wlanconf,omitempty"` // non-generated field: the controller returns it on every group
 }
 
 func (c *ApiClient) ListAPGroup(ctx context.Context, site string) ([]APGroup, error) {
