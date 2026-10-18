@@ -65,6 +65,7 @@ type WLAN struct {
 	IotDTIMLock                 *bool                      `json:"iot_dtim_lock,omitempty"`
 	IsGuest                     bool                       `json:"is_guest"`
 	L2Isolation                 bool                       `json:"l2_isolation"`
+	LegacyID                    *string                    `json:"legacy_id,omitempty"` // non-generated field: the id the object had before Network 11 re-keyed it
 	LogLevel                    string                     `json:"log_level,omitempty"`
 	MACFilterEnabled            bool                       `json:"mac_filter_enabled"`
 	MACFilterList               []string                   `json:"mac_filter_list,omitempty"`   // ^([0-9A-Fa-f]{2}:){5}([0-9A-Fa-f]{2})$

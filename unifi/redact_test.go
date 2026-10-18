@@ -16,6 +16,8 @@ func TestRedactSensitivePayload(t *testing.T) {
 		ipsecPSK  = "fake-ipsec-psk-value"
 		radiusSec = "fake-radius-secret-value"
 		pw        = "fake-password-value"
+		apiToken  = "fake-api-token-value"
+		mgmtKey   = "fake-mgmt-key-value"
 	)
 	body := []byte(`{
 		"name": "wgadmin",
@@ -25,12 +27,14 @@ func TestRedactSensitivePayload(t *testing.T) {
 		"x_ipsec_pre_shared_key": "` + ipsecPSK + `",
 		"vlan": 50,
 		"nested": {"radius_secret": "` + radiusSec + `", "ok": "keep"},
-		"list": [{"password": "` + pw + `"}]
+		"list": [{"password": "` + pw + `"}],
+		"x_api_token": "` + apiToken + `",
+		"x_mgmt_key": "` + mgmtKey + `"
 	}`)
 
 	out := redactSensitivePayload(body)
 
-	for _, leak := range []string{wgKey, pass, ipsecPSK, radiusSec, pw} {
+	for _, leak := range []string{wgKey, pass, ipsecPSK, radiusSec, pw, apiToken, mgmtKey} {
 		if strings.Contains(out, leak) {
 			t.Errorf("redacted payload still leaks %q: %s", leak, out)
 		}

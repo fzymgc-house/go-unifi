@@ -24,6 +24,7 @@ var (
 type Mgmt struct {
 	BaseSetting
 
+	APIToken                     string               `json:"x_api_token,omitempty"` // non-generated field: Network 11 stores the site API token here
 	AdvancedFeatureEnabled       bool                 `json:"advanced_feature_enabled"`
 	AlertEnabled                 bool                 `json:"alert_enabled"`
 	AutoUpgrade                  bool                 `json:"auto_upgrade"`
@@ -78,12 +79,12 @@ func (dst *Mgmt) UnmarshalJSON(b []byte) error {
 }
 
 type SettingMgmtSSHKeys struct {
-	Comment     string `json:"comment"`
-	Date        string `json:"date"`
-	Fingerprint string `json:"fingerprint"`
-	Key         string `json:"key"`
-	KeyType     string `json:"type"`
-	Name        string `json:"name"`
+	Comment     string          `json:"comment"`
+	Date        json.RawMessage `json:"date,omitempty"` // non-generated field: Network 11 stores an epoch in milliseconds, 10.6 a string, so the value round-trips raw
+	Fingerprint string          `json:"fingerprint"`
+	Key         string          `json:"key"`
+	KeyType     string          `json:"type"`
+	Name        string          `json:"name"`
 }
 
 func (dst *SettingMgmtSSHKeys) UnmarshalJSON(b []byte) error {

@@ -74,6 +74,8 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		NetworkIsolationEnabled bool                            `json:"network_isolation_enabled"`
 		SettingPreference       *string                         `json:"setting_preference,omitempty"`
 		ExternalID              string                          `json:"external_id,omitempty"`
+		LegacyID                string                          `json:"legacy_id,omitempty"`
+		DPIEnabled              bool                            `json:"dpi_enabled"`
 		FirewallZoneID          *string                         `json:"firewall_zone_id,omitempty"`
 		IPV6Aliases             []string                        `json:"ipv6_aliases"`
 		IPV6Enabled             *bool                           `json:"ipv6_enabled,omitempty"`
@@ -167,6 +169,8 @@ func (n *Network) marshalCorporate() ([]byte, error) {
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
 		SettingPreference:       valueOrDefault(n.SettingPreference, "auto"),
 		ExternalID:              n.ExternalID,
+		LegacyID:                n.LegacyID,
+		DPIEnabled:              n.DPIEnabled,
 		FirewallZoneID:          n.FirewallZoneID,
 		IPV6Aliases:             orEmptySlice(n.IPV6Aliases),
 		IPV6Enabled:             n.IPV6Enabled,
@@ -267,6 +271,8 @@ func (n *Network) marshalVLANOnly() ([]byte, error) {
 		IGMPSnooping            bool    `json:"igmp_snooping"`
 		NetworkIsolationEnabled bool    `json:"network_isolation_enabled"`
 		ExternalID              string  `json:"external_id,omitempty"`
+		LegacyID                string  `json:"legacy_id,omitempty"`
+		DPIEnabled              bool    `json:"dpi_enabled"`
 		FirewallZoneID          *string `json:"firewall_zone_id,omitempty"`
 		IPV6Enabled             *bool   `json:"ipv6_enabled,omitempty"`
 		DHCPguardEnabled        bool    `json:"dhcpguard_enabled"`
@@ -290,6 +296,8 @@ func (n *Network) marshalVLANOnly() ([]byte, error) {
 		IGMPSnooping:            n.IGMPSnooping,
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
 		ExternalID:              n.ExternalID,
+		LegacyID:                n.LegacyID,
+		DPIEnabled:              n.DPIEnabled,
 		FirewallZoneID:          n.FirewallZoneID,
 		IPV6Enabled:             n.IPV6Enabled,
 		DHCPguardEnabled:        n.DHCPguardEnabled,
@@ -332,6 +340,8 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		NetworkIsolationEnabled bool                            `json:"network_isolation_enabled"`
 		SettingPreference       *string                         `json:"setting_preference,omitempty"`
 		ExternalID              string                          `json:"external_id,omitempty"`
+		LegacyID                string                          `json:"legacy_id,omitempty"`
+		DPIEnabled              bool                            `json:"dpi_enabled"`
 		FirewallZoneID          *string                         `json:"firewall_zone_id,omitempty"`
 		IPV6Aliases             []string                        `json:"ipv6_aliases"`
 		IPV6Enabled             *bool                           `json:"ipv6_enabled,omitempty"`
@@ -425,6 +435,8 @@ func (n *Network) marshalGuest() ([]byte, error) {
 		NetworkIsolationEnabled: n.NetworkIsolationEnabled,
 		SettingPreference:       valueOrDefault(n.SettingPreference, "auto"),
 		ExternalID:              n.ExternalID,
+		LegacyID:                n.LegacyID,
+		DPIEnabled:              n.DPIEnabled,
 		FirewallZoneID:          n.FirewallZoneID,
 		IPV6Aliases:             orEmptySlice(n.IPV6Aliases),
 		IPV6Enabled:             n.IPV6Enabled,
@@ -516,6 +528,8 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		// Keys the controller stores on a WAN network. The update is a full
 		// replace, so each one is carried as read.
 		ExternalID            string  `json:"external_id,omitempty"`
+		LegacyID              string  `json:"legacy_id,omitempty"`
+		DPIEnabled            bool    `json:"dpi_enabled"`
 		SettingPreference     *string `json:"setting_preference,omitempty"`
 		IPV6SettingPreference *string `json:"ipv6_setting_preference,omitempty"`
 
@@ -609,6 +623,8 @@ func (n *Network) marshalWAN() ([]byte, error) {
 		Enabled: n.Enabled,
 
 		ExternalID:            n.ExternalID,
+		LegacyID:              n.LegacyID,
+		DPIEnabled:            n.DPIEnabled,
 		SettingPreference:     n.SettingPreference,
 		IPV6SettingPreference: n.IPV6SettingPreference,
 

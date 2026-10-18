@@ -25,8 +25,8 @@ type GuestAccess struct {
 	BaseSetting
 
 	AllowedSubnet                          string   `json:"allowed_subnet_,omitempty"`
-	Auth                                   string   `json:"auth,omitempty"` // none|hotspot|custom
-	AuthUrl                                string   `json:"auth_url,omitempty"`
+	Auth                                   string   `json:"auth,omitempty"`     // none|hotspot|custom
+	AuthUrl                                string   `json:"auth_url,omitempty"` // ^[^\x00-\x1F\x7F]*$
 	AuthorizeLoginid                       string   `json:"x_authorize_loginid,omitempty"`
 	AuthorizeTransactionkey                string   `json:"x_authorize_transactionkey,omitempty"`
 	AuthorizeUseSandbox                    bool     `json:"authorize_use_sandbox"`
