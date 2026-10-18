@@ -48,8 +48,11 @@ type FirewallPolicy struct {
 	MatchOppositeProtocol bool                       `json:"match_opposite_protocol"`
 	Name                  string                     `json:"name,omitempty"`
 	OriginID              string                     `json:"origin_id,omitempty"`
+	OriginType            string                     `json:"origin_type,omitempty"`
 	Predefined            bool                       `json:"predefined"`
 	Protocol              string                     `json:"protocol,omitempty"` // all|tcp|udp|tcp_udp
+	ReportFlow            *bool                      `json:"report_flow,omitempty"`
+	ReportFlowSupported   *bool                      `json:"report_flow_supported,omitempty"`
 	Schedule              *FirewallPolicySchedule    `json:"schedule,omitempty"`
 	Source                *FirewallPolicySource      `json:"source,omitempty"`
 	Version               string                     `json:"ip_version,omitempty"` // BOTH|IPV4|IPV6

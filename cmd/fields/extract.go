@@ -276,6 +276,12 @@ func extractJSON(jarFiles []string, fieldsDir string) error {
 		return fmt.Errorf("no api/fields/*.json field definitions found in %s; the controller package layout may have changed", strings.Join(jarFiles, ", "))
 	}
 
+	return splitSettings(fieldsDir)
+}
+
+// splitSettings writes one Setting<Section>.json per section of Setting.json and copies
+// the custom overrides in.
+func splitSettings(fieldsDir string) error {
 	// Setting.json is required: most of the generated Setting resources come
 	// from its per-section split, so a package without it means the layout
 	// changed and generation must fail loudly rather than silently emit an

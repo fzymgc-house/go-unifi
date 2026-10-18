@@ -530,3 +530,123 @@ func TestDeviceRadioTableMarshalSendsFalse(t *testing.T) {
 		}
 	}
 }
+
+// Network 11 stores the date of each SSH key in mgmt as an epoch in milliseconds, where 10.6
+// stored a string. The value round-trips as it came, and a key the client builds carries no date.
+func TestSettingMgmtSSHKeyDateRoundTripsNumber(t *testing.T) {
+	raw := `{"key":"mgmt","x_ssh_keys":[{"name":"k","type":"ssh-ed25519","key":"AAAA","comment":"","fingerprint":"SHA256:x","date":1792324643748}]}`
+	var m settings.Mgmt
+	if err := json.Unmarshal([]byte(raw), &m); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&m)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"date":1792324643748`) {
+		t.Errorf("marshal changed the date: %s", out)
+	}
+
+	built := settings.Mgmt{SSHKeys: []settings.SettingMgmtSSHKeys{{Name: "k", KeyType: "ssh-ed25519", Key: "AAAA"}}}
+	out, err = json.Marshal(&built)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if strings.Contains(string(out), `"date"`) {
+		t.Errorf("marshal invented a date: %s", out)
+	}
+}
+
+// Network 11 stores the site API token in mgmt. A write sends the whole section.
+func TestSettingMgmtKeepsAPIToken(t *testing.T) {
+	var m settings.Mgmt
+	if err := json.Unmarshal([]byte(`{"key":"mgmt","x_api_token":"tok"}`), &m); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&m)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"x_api_token":"tok"`) {
+		t.Errorf("marshal dropped x_api_token: %s", out)
+	}
+}
+
+// Network 11 stores the Flows logging toggle, whether the gateway supports it, and an origin type
+// on every firewall policy. A read-modify-write carries them, and a policy the client builds
+// leaves them out.
+func TestFirewallPolicyRoundTripsFlowKeys(t *testing.T) {
+	raw := `{"name":"p","action":"BLOCK","origin_type":null,"report_flow":true,"report_flow_supported":true}`
+	var p unifi.FirewallPolicy
+	if err := json.Unmarshal([]byte(raw), &p); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&p)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, want := range []string{`"report_flow":true`, `"report_flow_supported":true`} {
+		if !strings.Contains(string(out), want) {
+			t.Errorf("marshal dropped %s: %s", want, out)
+		}
+	}
+
+	out, err = json.Marshal(&unifi.FirewallPolicy{Name: "p", Action: "BLOCK"})
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	for _, key := range []string{"report_flow", "origin_type"} {
+		if strings.Contains(string(out), key) {
+			t.Errorf("marshal invented %s: %s", key, out)
+		}
+	}
+}
+
+// Network 11 re-keyed every object to a UUID and stores the old id as legacy_id on networks and
+// WLANs. A typed read-modify-write must carry it.
+func TestNetworkAndWLANKeepLegacyID(t *testing.T) {
+	var n unifi.Network
+	if err := json.Unmarshal([]byte(`{"purpose":"corporate","name":"n","legacy_id":"604d4e569c9b7d1005aaba91"}`), &n); err != nil {
+		t.Fatalf("unmarshal network: %v", err)
+	}
+	out, err := json.Marshal(&n)
+	if err != nil {
+		t.Fatalf("marshal network: %v", err)
+	}
+	if !strings.Contains(string(out), `"legacy_id":"604d4e569c9b7d1005aaba91"`) {
+		t.Errorf("network marshal dropped legacy_id: %s", out)
+	}
+
+	var w unifi.WLAN
+	if err := json.Unmarshal([]byte(`{"name":"w","legacy_id":"6481c7b59c9b7d13a7725627"}`), &w); err != nil {
+		t.Fatalf("unmarshal wlan: %v", err)
+	}
+	out, err = json.Marshal(&w)
+	if err != nil {
+		t.Fatalf("marshal wlan: %v", err)
+	}
+	if !strings.Contains(string(out), `"legacy_id":"6481c7b59c9b7d13a7725627"`) {
+		t.Errorf("wlan marshal dropped legacy_id: %s", out)
+	}
+}
+
+// Network 11 stores ld_status on a port profile, null on most and false on some.
+func TestPortProfileRoundTripsLDStatus(t *testing.T) {
+	var p unifi.PortProfile
+	if err := json.Unmarshal([]byte(`{"name":"p","ld_status":false}`), &p); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	out, err := json.Marshal(&p)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if !strings.Contains(string(out), `"ld_status":false`) {
+		t.Errorf("marshal dropped ld_status: %s", out)
+	}
+	if err := json.Unmarshal([]byte(`{"name":"p","ld_status":null}`), &p); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if p.LdStatus != nil {
+		t.Errorf("a null ld_status decoded as %v", *p.LdStatus)
+	}
+}
