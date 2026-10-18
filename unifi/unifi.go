@@ -883,6 +883,8 @@ var sensitivePayloadKeys = []string{
 	"password",
 	"secret",
 	"psk",
+	"api_token",
+	"mgmt_key",
 }
 
 // redactSensitivePayload returns the JSON request body with the values of any
