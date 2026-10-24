@@ -1,0 +1,49 @@
+{
+  "acl_index": "[0-9]+",
+  "action": "ALLOW|BLOCK",
+  "description": "",
+  "enabled": "true|false",
+  "external_id": "",
+  "ip_acl_protocol": "ALL|TCP|UDP|TCP_AND_UDP",
+  "mac_acl_network_id": "",
+  "name": "",
+  "origin_id": "",
+  "origin_type": "",
+  "predefined": "true|false",
+  "specific_enforcers": [
+    "^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$"
+  ],
+  "traffic_destination": {
+    "ips_or_subnets": [
+      ""
+    ],
+    "mac_mask": "^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$",
+    "network_ids": [
+      ""
+    ],
+    "ports": [
+      "[0-9]+"
+    ],
+    "specific_mac_addresses": [
+      "^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$"
+    ],
+    "type": "CLIENT_MAC|IP_OR_SUBNET|NETWORK"
+  },
+  "traffic_source": {
+    "ips_or_subnets": [
+      ""
+    ],
+    "mac_mask": "^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$",
+    "network_ids": [
+      ""
+    ],
+    "ports": [
+      "[0-9]+"
+    ],
+    "specific_mac_addresses": [
+      "^([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2})$"
+    ],
+    "type": "CLIENT_MAC|IP_OR_SUBNET|NETWORK"
+  },
+  "type": "MAC|IPV4|IPV6"
+}

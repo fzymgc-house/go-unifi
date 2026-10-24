@@ -200,6 +200,17 @@ func NewResource(structName string, resourcePath string) *ResourceInfo {
 			// Network 10.6 stores auto_enabled beside enabled; the field spec does not list it.
 			baseType.Fields["AutoEnabled"] = NewFieldInfo("AutoEnabled", "auto_enabled", fields.Bool, "non-generated field: Network 10.6 stores it beside enabled", false, false, false, "")
 		}
+	case resource.StructName == "AclRule":
+		resource.ResourcePath = "acl-rules"
+		resource.FieldProcessor = func(name string, f *FieldInfo) error {
+			// The UI always sends both lists. An empty specific_enforcers puts the rule on
+			// every switch, and an empty specific_mac_addresses matches every device, so an
+			// empty list is a value and must not be dropped.
+			if name == "SpecificEnforcers" || name == "SpecificMACAddresses" {
+				f.OmitEmpty = false
+			}
+			return nil
+		}
 	case resource.StructName == "DNSRecord":
 		resource.ResourcePath = "static-dns"
 	case resource.StructName == "FirewallZone":
@@ -911,6 +922,7 @@ func (r *ResourceInfo) IsDevice() bool {
 
 func (r *ResourceInfo) IsV2() bool {
 	return slices.Contains([]string{
+		"AclRule",
 		"ApGroup",
 		"BGPConfig",
 		"DNSRecord",

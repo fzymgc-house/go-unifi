@@ -256,6 +256,15 @@ func (c *ApiClient) delete{{ .StructName }}(
 	id string,
 {{- end }}
 ) error {
+{{- if eq .StructName "AclRule" }}
+	err := c.do(
+		ctx,
+		http.MethodPost,
+		fmt.Sprintf("v2/api/site/%s/{{ .ResourcePath }}/batch-delete", site),
+		[]string{id},
+		nil,
+	)
+{{- else }}
 	err := c.do(
 		ctx,
 		http.MethodDelete,
@@ -263,6 +272,7 @@ func (c *ApiClient) delete{{ .StructName }}(
 		struct{}{},
 		nil,
 	)
+{{- end }}
 	if err != nil {
 		return err
 	}
