@@ -24,8 +24,8 @@ var (
 type SuperFwupdate struct {
 	BaseSetting
 
-	ControllerChannel string `json:"controller_channel,omitempty"` // dev|qa|internal|alpha|beta|release-candidate|lts|release
-	FirmwareChannel   string `json:"firmware_channel,omitempty"`   // dev|qa|internal|alpha|beta|release-candidate|lts|release
+	ControllerChannel string `json:"controller_channel,omitempty"` // internal|alpha|beta|release-candidate|release
+	FirmwareChannel   string `json:"firmware_channel,omitempty"`   // internal|alpha|beta|release-candidate|release
 	SsoEnabled        bool   `json:"sso_enabled"`
 }
 
